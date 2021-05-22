@@ -1,5 +1,5 @@
 // Anything to do with the HTML and CSS.
-let unit = Math.floor(window.innerWidth / 160) * 8; // unit = 1/20 of the screen width
+let unit = Math.ceil(window.innerWidth / 20); // unit = 1/20 of the screen width
 document.body.style.setProperty("--unit", unit + 'px');
 document.body.style.setProperty("--pixel", unit/10 + 'px');
 
@@ -35,7 +35,7 @@ function startGame() {
         animate();
         stepAnimate();
     }, 1000);
-    canvases.FC.style.backgroundColor = "#08071a";
+    canvases.BC.style.backgroundColor = "#08071a";
 }
 
 setTimeout(function () {

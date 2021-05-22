@@ -100,6 +100,9 @@ var avatar = {
 
         if (this.inAir) {
             this.vcoor[1] -= gravity;
+        } else {
+            this.vcoor[1] = 0
+            this.coor[1] = this.coor[1] / unit;
         }
 
         // collision detection ought to happen here.
