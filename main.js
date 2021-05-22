@@ -21,8 +21,10 @@ function startGame() {
     canvases.init();
     avatar.init();
     levels.init();
-    animate();
-    stepAnimate();
+    setTimeout(function () {
+        animate();
+        stepAnimate();
+    }, 1000);
 }
 
 setTimeout(function () {

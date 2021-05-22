@@ -41,7 +41,7 @@ var avatar = {
     vcoor: [0, 0], // velocity of the avatar
     maxv: 14, // max speed.
     xa: [1, 0.25], // max acceleration: [ground, air].
-    yv: 30, // jump speed.
+    yv: 19, // jump speed.
     size: [40, 40], // size of the avatar.
     img: new Image(),
     init: function () {
@@ -65,48 +65,43 @@ var avatar = {
         }
 
         // up down left right
-        let co = [Math.ceil(this.coor[0] / unit), Math.ceil(this.coor[1] / unit)]; // current co
-        let blocks = [1, 0, 1, 0, 0]; // [left, up, right, down, right-down(cause ceil)]
-        if (co[0] > 0) blocks[0] = levels.levels[levels.currentLevel][co[1]][co[0] - 1];
-        if (co[0] < levels.size[0]) {
-            blocks[2] = levels.levels[levels.currentLevel][co[1]][co[0] + 1];
-            if (co[0] < levels.size[1]) blocks[4] = levels.levels[levels.currentLevel][co[1] + 1][co[0] + 1];
-        }
-        if (co[1] > 0) blocks[1] = levels.levels[levels.currentLevel][co[1] - 1][co[0]];
-        if (co[0] < levels.size[1]) blocks[3] = levels.levels[levels.currentLevel][co[1] + 1][co[0]];
+        let co = [Math.round(this.coor[0] / unit) + 1, Math.round(this.coor[1] / unit) + 1]; // current co
 
-        if (this.keys[1] && !this.vcoor[1] && (blocks[3] == 1 || blocks[4] == 1) && blocks[1]) {
+        let blocks = [
+            [levels.levels[levels.currentLevel][co[1] - 1][co[0] - 1], levels.levels[levels.currentLevel][co[1] - 1][co[0]], levels.levels[levels.currentLevel][co[1] - 1][co[0] + 1]],
+            [levels.levels[levels.currentLevel][co[1]][co[0] - 1], levels.levels[levels.currentLevel][co[1]][co[0]], levels.levels[levels.currentLevel][co[1]][co[0] + 1]],
+            [levels.levels[levels.currentLevel][co[1] + 1][co[0] - 1], levels.levels[levels.currentLevel][co[1] + 1][co[0]], levels.levels[levels.currentLevel][co[1] + 1][co[0] + 1]]
+        ];
+
+        if (this.keys[1] && !this.vcoor[1] && (blocks[2][1] == 1 || blocks[2][0] == 1 || blocks[2][2] == 1)) {
             this.vcoor[1] = this.yv;
             this.inAir = 1;
         }
 
-        let acc = 0; // acceleration for on ground
-
-        // ARE YOU IN THE AIR???????
-        if ((blocks[3] == 1 || blocks[4] == 1) && Math.floor(1)/* unit is about to change */) { // "not in air"
-            this.inAir = 0;
-        } else { // "in air"
+        if (blocks[2][1] == 1) this.inAir = 0;
+        else if (Math.floor(this.coor[0] / unit) + 1 !== co[0] && blocks[2][0] == 1) this.inAir = 0;
+        else if (Math.ceil(this.coor[0] / unit) + 1 !== co[0] && blocks[2][2] == 1) this.inAir = 0;
+        else { // "in air"
             this.inAir = 1;
+            console.log("No ground beneath you.");
         }
 
         
         switch (this.action) {
-            case 0:
-                // accelerate to stopped.
+            case 0: // stopped.
                 this.vcoor[0] = Math.sign(this.vcoor[0]) * (Math.abs(this.vcoor[0]) - this.xa[this.inAir]);
                 break;
-            case 1:
-                // accelerate left.
+            case 1: // accelerating left.
                 this.vcoor[0] -= this.xa[this.inAir];
                 break;
-            case 2:
-                // accelerate right.
+            case 2: // accelerating right.
                 this.vcoor[0] += this.xa[this.inAir];
                 break;
         }
 
-        
-        if (this.inAir) this.vcoor[1] -= gravity;
+        if (this.inAir) {
+            this.vcoor[1] -= gravity;
+        }
 
         // collision detection ought to happen here.
 
@@ -135,14 +130,19 @@ var levels = {
         this.levels.push(values);
     },
     drawLevel: function (level, side) {
-        for (let i = 0; i < this.size[0]; i++) {
-            for (let j = 0; j < this.size[1]; j++) {
+        for (let i = 1; i <= this.size[0]; i++) {
+            for (let j = 1; j <= this.size[1]; j++) {
                 switch (this.levels[level][j][i]) {
                     case 1:
-                        canvases.BCctx.drawImage(this.ground, 0, 0, 100, 100, i * unit + side * unit * 20, j * unit, unit, unit);
+                        let blocks = [1, 1, 1, 1];
+                        if (levels.levels[level][j][i - 1] == 1) blocks[1] = 0;
+                        if (levels.levels[level][j][i + 1] == 1) blocks[0] = 0;
+                        if (levels.levels[level][j - 1][i] == 1) blocks[2] = 0;
+                        if (levels.levels[level][j + 1][i] == 1) blocks[3] = 0;
+                        canvases.BCctx.drawImage(this.ground, (blocks[1] + 2 * blocks[0]) * 100, (blocks[2] + 2 * blocks[3]) * 100, 100, 100, i * unit + side * unit * 20 - unit, j * unit - unit, unit, unit);
                         break;
                     case 2:
-                        avatar.coor = [i * unit, j * unit];
+                        avatar.coor = [(i - 1) * unit, (j - 1) * unit];
                         break;
                 }
             }
@@ -161,18 +161,20 @@ var levels = {
 
 
 levels.addLevel([
-    [0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1],
-    [1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
+    [1, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
+    [1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ]);
