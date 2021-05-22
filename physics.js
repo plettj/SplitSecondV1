@@ -1,12 +1,18 @@
 // Runs and computes all the physics of the game.
 
+
+
 // GameStep + animationStep loop
 function stepAnimate() {
 	if (!paused) {
 		stepCounter++;
-		step = stepCounter % 4;
+        if (avatar.action) {
+		    step = stepCounter % 4;
+        } else {
+            step = Math.floor(stepCounter % 8 / 2);
+        }
 	}
-	setTimeout(stepAnimate, 250);
+	setTimeout(stepAnimate, 125);
 }
 
 // Frame-by-frame animation

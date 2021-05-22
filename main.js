@@ -20,6 +20,7 @@ var canvases = {
 function startGame() {
     canvases.init();
     avatar.init();
+    levels.init();
     animate();
     stepAnimate();
 }
