@@ -1,3 +1,16 @@
 /* Style! */
 
 /* Jayden will mostly be working with this file. */
+* {
+    overflow: hidden;
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#BackgroundCanvas {
+    background-color: #08071a;
+}
