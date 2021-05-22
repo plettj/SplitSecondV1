@@ -9,8 +9,8 @@ var canvases = {
     FCctx: undefined,
     init: function () {
         [this.BC, this.FC].forEach(function (canvas) {
-            canvas.width = con.u * levels.size[2]
-            canvas.height = con.u * levels.size[1];
+            canvas.width = unit * levels.size[0]
+            canvas.height = unit * levels.size[1];
         });
         this.BCctx = this.BC.getContext('2d');
         this.FCctx = this.FC.getContext('2d');
@@ -20,6 +20,8 @@ var canvases = {
 function startGame() {
     canvases.init();
     avatar.init();
+    animate();
+    stepAnimate();
 }
 
 setTimeout(function () {
