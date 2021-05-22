@@ -1,7 +1,12 @@
 /* Style! */
 
-/* Jayden will mostly be working with this file. */
-* {
+:root {
+    --unit: 0px;
+    --pixel: 0px;
+    --blue: #4da6ff;
+}
+
+body {
     overflow: hidden;
 }
 
@@ -11,6 +16,60 @@ canvas {
     left: 0;
 }
 
-#BackgroundCanvas {
-    background-color: #08071a;
+.pauseBtn {
+    right: var(--pixel);
+    top: var(--pixel);
+    position: absolute;
+    width: calc(var(--unit)/2);
+    height: calc(var(--unit)/2);
+}
+
+button {
+    padding: 10px;
+    border: none;
+    border-radius: 0px;
+    background-color: var(--blue);
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.5s;
+}
+
+button:hover {
+    background-color: white;
+    color: var(--blue);
+}
+
+.ui {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 4;
+    position: absolute;
+}
+
+.modal {
+    padding: 10px 20px;
+    width: 50%;
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    background-color: white;
+    border-radius: none;
+    transition-duration: 1s;
+}
+
+.modalbg {
+    position: absolute;
+    z-index: 3;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
 }

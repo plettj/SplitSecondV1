@@ -2,7 +2,6 @@
 
 // Variables:
 let paused = false;
-let unit = Math.floor(window.innerWidth / 160) * 8; // unit = 1/20 of the screen width
 let gravity = 3.5; // vertical acceleration
 let friction = 0.7; // coefficient of friction
 let stepCounter = 0; // animation step digit
