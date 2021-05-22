@@ -30,8 +30,11 @@ var canvases = {
 function startGame() {
     canvases.init();
     avatar.init();
-    animate();
-    stepAnimate();
+    levels.init();
+    setTimeout(function () {
+        animate();
+        stepAnimate();
+    }, 1000);
     canvases.FC.style.backgroundColor = "#08071a";
 }
 
