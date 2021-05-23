@@ -102,7 +102,6 @@ var avatar = {
         }
         
         if (this.keys[1] && !this.vcoor[1] && (blocks[2][1] == 1 || blocks[2][0] == 1 || blocks[2][2] == 1)) {
-            console.log("Trying to jump!");
             let y = Math.ceil(this.coor[1] / unit);
             let roof = false;
             if (levels.levels[levels.currentLevel][y][co[0]] == 1) roof = true;
@@ -130,7 +129,6 @@ var avatar = {
         if (this.inAir) {
             this.vcoor[1] -= gravity;
         } else if (Math.abs(Math.ceil(this.coor[1] / unit) - Math.floor(this.coor[1] / unit)) == 1) {
-            console.log("Snapping, vertically: %% = " + ((this.vcoor[1] / unit) % 1));
             if (Math.abs(this.vcoor[1] / unit) % 1 > 0.8 && this.vcoor[1]) this.coor[1] = Math.floor(this.coor[1] / unit) * unit;
             else if (this.vcoor[1] && (Math.abs(this.vcoor[1] / unit) % 1 > 0.216 || Math.abs(this.vcoor[1] / unit) % 1 < 0.212)) this.coor[1] = Math.ceil(this.coor[1] / unit) * unit;
             this.vcoor[1] = 0;
@@ -169,44 +167,79 @@ var avatar = {
     }
 }
 
-
 var buttonImg = new Image();
 buttonImg.src = "assets/ButtonTileset2.png";
+var doorImg = new Image();
+doorImg.src = "assets/DoorTileset.png";
+var spikeImg = new Image();
+spikeImg.src = "assets/SpikeTileset.png";
 
-function Button(x, y, dir, colour, interact) {
+function Button(x, y, dir, colour, mechanics) {
     //dir should be 0 (<) or 1 (>)
     this.frame = 0;
     this.dir = dir;
-    this.colour = colour;
-    this.interact = interact;
+    this.colour = colour; // 0-blue doors 1-green spikes *** on level map: 3 = door, 4 = spikes
+    this.mechanics = mechanics;
+    this.tarCur = 1; // mechanic curr animation point.
+    this.target = 0; // mechanic animation target.
     this.pressed = 0;
     this.coor = [x * unit, y * unit];
-}
-Button.prototype.check = function () {
-    //console.log(Math.round(avatar.coor[0] / unit * 10)/10);
-    //console.log(this.coor[0] / unit);
-    //x
-    if ((this.dir == 0 && Math.round(avatar.coor[0] / unit * 10)/10 <= this.coor[0] / unit + 0.1 && Math.round(avatar.coor[0] / unit * 10)/10 >= this.coor[0] / unit) || (this.dir == 1 && Math.round(avatar.coor[0] / unit * 10)/10 >= this.coor[0] / unit - 0.1 && Math.round(avatar.coor[0] / unit * 10)/10 <= this.coor[0] / unit)) {
-        if (Math.ceil(avatar.coor[1] / unit) == this.coor[1] / unit && Math.floor(avatar.coor[1] / unit) == this.coor[1] / unit) {
-            this.pressed = 1;
-            this.draw();
-        } else {
-            this.pressed = 0;
-            this.draw();
-        }
-    } else {
+    this.check = function () {
         this.pressed = 0;
+        for (let g = 0; g < levels.ghosts.length; g++) {
+            let co = [levels.ghosts[g].instructions[levels.ghosts[g].frame][0], levels.ghosts[g].instructions[levels.ghosts[g].frame][1]];
+            if (!levels.ghosts[g].waiting) {
+                if ((this.dir == 0 && Math.round(co[0] / unit * 10)/10 <= this.coor[0] / unit + 0.1 && Math.round(co[0] / unit * 10)/10 >= this.coor[0] / unit) || (this.dir == 1 && Math.round(co[0] / unit * 10)/10 >= this.coor[0] / unit - 0.1 && Math.round(co[0] / unit * 10)/10 <= this.coor[0] / unit)) {
+                    if (Math.ceil(co[1] / unit) == this.coor[1] / unit && Math.floor(co[1] / unit) == this.coor[1] / unit) {
+                        this.pressed = 1;
+                        this.draw();
+                        return;
+                    }
+                }
+            }
+        }
+        if ((this.dir == 0 && Math.round(avatar.coor[0] / unit * 10)/10 <= this.coor[0] / unit + 0.1 && Math.round(avatar.coor[0] / unit * 10)/10 >= this.coor[0] / unit) || (this.dir == 1 && Math.round(avatar.coor[0] / unit * 10)/10 >= this.coor[0] / unit - 0.1 && Math.round(avatar.coor[0] / unit * 10)/10 <= this.coor[0] / unit)) {
+            if (Math.ceil(avatar.coor[1] / unit) == this.coor[1] / unit && Math.floor(avatar.coor[1] / unit) == this.coor[1] / unit) {
+                this.pressed = 1;
+                this.draw();
+                return;
+            }
+        }
         this.draw();
     }
-
-    //y
-
+    this.draw = function () {
+        this.target = this.pressed * 3;
+        clear(canvases.MCctx, this.coor);
+        canvases.MCctx.drawImage(buttonImg, (this.pressed + this.dir*3) * 100, (this.colour) * 100, 100, 100, this.coor[0], this.coor[1], unit, unit);
+    }
+    this.drawMechanics = function () {
+        if (this.target === this.tarCur) {
+            if (!this.target) {
+                for (let i = 0; i < this.mechanics.length; i++) {
+                    levels.levels[levels.currentLevel][this.mechanics[i][1] + 1][this.mechanics[i][0] + 1] = 3 + this.colour;
+                }
+            } else {
+                for (let i = 0; i < this.mechanics.length; i++) {
+                    levels.levels[levels.currentLevel][this.mechanics[i][1] + 1][this.mechanics[i][0] + 1] = 0;
+                } 
+            }
+            return;
+        }
+        this.tarCur += this.target * 2 / 3 - 1;
+        if (this.colour == 0) { // blue doors
+            for (let i = 0; i < this.mechanics.length; i++) {
+                clear(canvases.MCctx, [this.mechanics[i][0] * unit, this.mechanics[i][1] * unit]);
+                canvases.MCctx.drawImage(doorImg, (this.tarCur) * 100, 0, 100, 100, this.mechanics[i][0] * unit, this.mechanics[i][1] * unit, unit, unit);
+            }
+        } else { // green spikes
+            for (let i = 0; i < this.mechanics.length; i++) {
+                clear(canvases.MCctx, [this.mechanics[i][0] * unit, this.mechanics[i][1] * unit]);
+                canvases.MCctx.drawImage(spikeImg, (this.tarCur) * 100, 0, 100, 100, this.mechanics[i][0] * unit, this.mechanics[i][1] * unit, unit, unit);
+            }
+        }
+    }
 }
 
-Button.prototype.draw = function () {
-    clear(canvases.MCctx, this.coor);
-    canvases.MCctx.drawImage(buttonImg, (this.pressed + this.dir*3) * 100, (this.colour) * 100, 100, 100, this.coor[0], this.coor[1], unit, unit);
-}
 
 function Ghost() {
     this.time = time; // this ghost's native direction
@@ -215,7 +248,7 @@ function Ghost() {
     this.coor2 = [0, 0]; // life ended here.
     this.instructions = []; // [x, y, dir, inAir]
     this.frame = 0; // location in instructions
-    this.waiting = false;
+    this.waiting = false; // whether it doesn't exist.
     this.init = function () {
         this.life[0] = frame;
         this.time = time;
@@ -229,10 +262,7 @@ function Ghost() {
             if (this.frame < 0) this.frame = 0;
             else this.frame = this.instructions.length - 1;
         }
-        console.log(this.instructions.length);
-        console.log(this.frame);
         var a = this.instructions[this.frame];
-        console.log(a);
         if (!draw) clear(canvases.GCctx, [a[0], a[1]]);
         else canvases.GCctx.drawImage(avatar.img, step * 100, (a[2] + a[3] * 2) * 100, 100, 100, a[0], a[1], unit, unit);;
     }
@@ -277,10 +307,14 @@ var levels = {
     },
     addLevel: function (values, buttons) {
         this.levels.push(values);
-        this.buttons = buttons;
+        this.buttons.push(buttons);
         console.log(this.buttons);
     },
     drawLevel: function (level, side) {
+        clear(canvases.BCctx);
+        clear(canvases.GCctx);
+        clear(canvases.FCctx);
+        clear(canvases.MCctx);
         for (let i = 1; i <= this.size[0]; i++) {
             for (let j = 1; j <= this.size[1]; j++) {
                 switch (this.levels[level][j][i]) {
@@ -303,9 +337,10 @@ var levels = {
                 }
             }
         }
-        if (levels.buttons != '') {
-			for (var i = 0; i < levels.buttons.length; i++) {
-				levels.buttons[i].draw();
+        if (levels.buttons[levels.currentLevel] != '') {
+			for (var i = 0; i < levels.buttons[levels.currentLevel].length; i++) {
+				levels.buttons[levels.currentLevel][i].draw();
+				levels.buttons[levels.currentLevel][i].drawMechanics();
 			}
 		}
     },
@@ -316,53 +351,57 @@ var levels = {
         levels.drawLevel(level, 0); // change 0 to 1 for animation system.
         nextGhost = new Ghost();
         nextGhost.init();
-
-        // draw new level on right of canvas.
-        // animate (css) towards new level.
-        // erase previous level; redraw current level on left of canvas.
-        // start game.
-
         levels.currentLevel = level;
+        console.log(this.levels[this.currentLevel]);
     }
 }
 
 
 
-levels.addLevel([
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
-    [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
-    [1, 0, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-],
-[new Button(6, 6, 1, 1), new Button(9, 6, 0, 1)]);
+levels.addLevel(
+    [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
+        [1, 0, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ],
+    [
+        new Button(6, 6, 1, 0, [[18, 4], [19, 4], [14, 7]]), new Button(9, 6, 0, 1, [[17, 1], [4, 5]])
+    ]
+);
 
-/*levels.addLevel([
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
-    [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
-    [1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1],
-    [1, 0, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1],
-    [1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1],
-    [1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-]);*/
+levels.addLevel(
+    [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
+        [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
+        [1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1],
+        [1, 0, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1],
+        [1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1],
+        [1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ],
+    [
+
+    ]
+);

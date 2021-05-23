@@ -14,10 +14,13 @@ function reverseTime() {
 function stepAnimate() {
 	if (!paused) {
 		stepCounter++;
-        if (avatar.action) {
+        /*if (avatar.action) {
 		    step = stepCounter % 4;
-        } else {
+        } else {*/
             step = Math.floor(stepCounter % 8 / 2);
+        //}
+        for (let i = 0; i < levels.buttons[levels.currentLevel].length; i++) {
+            levels.buttons[levels.currentLevel][i].drawMechanics();
         }
 	}
 	setTimeout(stepAnimate, 125);
@@ -27,11 +30,6 @@ function stepAnimate() {
 
 function animate() {
 	if (!paused) {
-		if (levels.buttons != '') {
-			for (var i = 0; i < levels.buttons.length; i++) {
-				levels.buttons[i].check();
-			}
-		}
 		avatar.physics();
         frame += time;
         if (!(frame % GFuel)) { // Run the Ghosts!!
@@ -39,7 +37,12 @@ function animate() {
             for (let g = 0; g < levels.ghosts.length; g++) {
                 let ghost = levels.ghosts[g];
                 ghost.newFrame();
-            } 
+            }
+            if (levels.buttons != '') {
+                for (var i = 0; i < levels.buttons[levels.currentLevel].length; i++) {
+                    levels.buttons[levels.currentLevel][i].check();
+                }
+            }
         }
         IDs.time.innerHTML = Math.ceil((frame - 1800) / -60) + "s";
 	}

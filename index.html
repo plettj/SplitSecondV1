@@ -10,19 +10,20 @@
         <div class="ui">
             <img src="assets/pauseBtn.png" class="pauseBtn" id="pauseBtn" onclick="pause()">
         </div>
-        
-        <div id="Time">The inner-html of this will be updated by the frame value of the game.</div>
+
+        <div class="box-container"><h1 id="Time"></h1></div>
 
         <div class="modalbg" id="modal1">
             <div class="modal animate-fade">
                 <h1>Game Paused</h1>
             </div>
-            
+
           </div>
+        <div id="splitEffect"></div>
     </body>
 
     <!--For everything that's static-->
-	<canvas id="BackgroundCanvas"></canvas>
+    <canvas id="BackgroundCanvas"></canvas>
     <!--For the avatar, ghosts, and mechanics in the front-->
     <!--For the ghosts-->
     <canvas id="GhostCanvas"></canvas>
@@ -30,9 +31,9 @@
     <canvas id="FrontCanvas"></canvas>
     <canvas id="MechanicsCanvas"></canvas>
 
-	<script id="MainScript" src="main.js"></script>
-	<script id="PhysicsScript" src="physics.js"></script>
-	<script id="GameScript" src="game.js"></script>
+    <script id="MainScript" src="main.js"></script>
+    <script id="PhysicsScript" src="physics.js"></script>
+    <script id="GameScript" src="game.js"></script>
 </html>
 
 
