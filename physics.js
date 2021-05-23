@@ -1,8 +1,5 @@
-// Runs and computes all the physics of the game.
-
-
-
 // GameStep + animationStep loop
+
 function stepAnimate() {
 	if (!paused) {
 		stepCounter++;
@@ -16,6 +13,7 @@ function stepAnimate() {
 }
 
 // Frame-by-frame animation
+
 function animate() {
 	if (!paused) {
 		avatar.physics();

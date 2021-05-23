@@ -37,7 +37,7 @@ var avatar = {
     coor: [0, 0], // position of the avatar, in pixels
     vcoor: [0, 0], // velocity of the avatar
     maxv: 6 / 56 * unit, // max speed.
-    xa: [1 / 56 * unit, 1 / 100 * unit], // max acceleration: [ground, air].
+    xa: [1 / 70 * unit, 1 / 120 * unit], // max acceleration: [ground, air].
     yv: 18 / 56 * unit, // jump speed.
     img: new Image(),
     init: function () {
@@ -106,6 +106,7 @@ var avatar = {
             if (!roof) this.vcoor[1] = this.yv;
             else this.vcoor[1] = unit / 20;
             this.inAir = 1;
+            this.keys[1] = 0;
         }
 
         
@@ -145,8 +146,19 @@ var avatar = {
             }
         }
 
+        if (!this.inAir && this.vcoor[1] == 0 && Math.abs(this.coor[1] / unit) % 1 !== 0) {
+            this.coor[1] = Math.round(this.coor[1] / unit) * unit;
+        }
+
         this.coor[0] += this.vcoor[0];
         this.coor[1] -= this.vcoor[1]; // - because down is positive. takes care of all this.
+
+        // inside a block??
+        if (blocks[1][1] == 1) {
+            if (this.dir && blocks[1][2] !== 1) this.coor[0] = Math.round(this.coor[0] / unit + 1) * unit;
+            else if (blocks[1][0] == 1) this.coor[0] = Math.round(this.coor[0] / unit + 1) * unit;
+            else this.coor[0] = Math.round(this.coor[0] / unit - 1) * unit;
+        }
 
         this.draw([step, this.dir + this.inAir * 2]);
     }
