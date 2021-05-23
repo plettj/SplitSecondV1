@@ -189,27 +189,23 @@ Button.prototype.check = function () {
     if ((this.dir == 0 && Math.round(avatar.coor[0] / unit * 10)/10 <= this.coor[0] / unit + 0.1 && Math.round(avatar.coor[0] / unit * 10)/10 >= this.coor[0] / unit) || (this.dir == 1 && Math.round(avatar.coor[0] / unit * 10)/10 >= this.coor[0] / unit - 0.1 && Math.round(avatar.coor[0] / unit * 10)/10 <= this.coor[0] / unit)) {
         if (Math.ceil(avatar.coor[1] / unit) == this.coor[1] / unit && Math.floor(avatar.coor[1] / unit) == this.coor[1] / unit) {
             this.pressed = 1;
-            this.frames();
-        } else this.pressed = 0;
-    } else this.pressed = 0;
+            this.draw();
+        } else {
+            this.pressed = 0;
+            this.draw();
+        }
+    } else {
+        this.pressed = 0;
+        this.draw();
+    }
+
     //y
 
 }
-Button.prototype.frames = function () {
-    var t = this;
-    if (this.pressed) {
-        clear(canvases.MCctx, this.coor);
-        this.frame += 1 * this.pressed;
-        if (this.frame < 3) this.draw([this.frame, 0]);
-        else return;
-    } else {
 
-    }
-    
-    setTimeout(function () {t.frames();}, 1000);
-}
-Button.prototype.draw = function (a) {
-    canvases.MCctx.drawImage(buttonImg, (a[0] + this.dir*3) * 100, (a[1] + this.colour) * 100, 100, 100, this.coor[0], this.coor[1], unit, unit);
+Button.prototype.draw = function () {
+    clear(canvases.MCctx, this.coor);
+    canvases.MCctx.drawImage(buttonImg, (this.pressed + this.dir*3) * 100, (this.colour) * 100, 100, 100, this.coor[0], this.coor[1], unit, unit);
 }
 
 function Ghost() {
@@ -309,7 +305,7 @@ var levels = {
         }
         if (levels.buttons != '') {
 			for (var i = 0; i < levels.buttons.length; i++) {
-				levels.buttons[i].draw([0, 0]);
+				levels.buttons[i].draw();
 			}
 		}
     },
@@ -350,7 +346,7 @@ levels.addLevel([
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ],
-[new Button(6, 6, 1, 0), new Button(9, 6, 0, 0)]);
+[new Button(6, 6, 1, 1), new Button(9, 6, 0, 1)]);
 
 /*levels.addLevel([
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
