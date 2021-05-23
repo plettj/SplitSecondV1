@@ -168,6 +168,8 @@ var levels = {
                     case 2:
                         avatar.coor = [(i - 1) * unit, (j - 1) * unit];
                         break;
+                    case 3:
+
                 }
             }
         }
