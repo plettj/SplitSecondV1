@@ -74,7 +74,7 @@ function animate() {
                 }
             }
         }
-        IDs.time.innerHTML = Math.ceil((frame - 1800) / -60);
+        IDs.time.innerHTML = Math.ceil(frame / 60);
 	}
 	raf = window.requestAnimationFrame(animate);
 }
