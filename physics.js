@@ -23,9 +23,8 @@ function reverseTime() {
 	}, 1100);
 }
 
-var r = true;
 function startOver(level) {
-	if (!r) return;
+    time = 1;
 	document.getElementById('startEffect').style.top = "100%";
 	setTimeout(function () {
 		document.getElementById('startEffect').style.transitionDuration = '0s';
@@ -44,7 +43,7 @@ function startOver(level) {
     }, 300);
     setTimeout(function () {
         levels.startLevel(level);
-    }, 500);
+    }, 310);
 }
 
 // GameStep + animationStep loop
@@ -82,7 +81,12 @@ function animate() {
                 }
             }
         }
-        IDs.time.innerHTML = Math.ceil(frame / 60);
+        if ((time > 0 && Math.round(frame / 60) >= 25) || (time < 0 && Math.round(frame / 60) <= 5)) IDs.time.style.color = "#fff2f4";
+        else IDs.time.style.color = "#c47362";
+        IDs.time.innerHTML = Math.round(frame / 60);
+        if (frame >= 1800 || frame <= 0) {
+            startOver(levels.currentLevel);
+        }
 	}
 	raf = window.requestAnimationFrame(animate);
 }

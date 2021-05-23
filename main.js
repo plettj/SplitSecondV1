@@ -57,7 +57,6 @@ function startGame() {
         animate();
         stepAnimate();
     }, 1000);
-    canvases.BC.style.backgroundColor = "#08071a";
 }
 
 setTimeout(function () {
