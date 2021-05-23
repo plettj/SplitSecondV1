@@ -13,6 +13,10 @@ function hide(ID) {
     document.getElementById(ID).style.display = "none";
 }
 
+var IDs = {
+    time: document.getElementById("Time")
+}
+
 function pause() {
     paused = !paused;
     if (paused) {
@@ -27,14 +31,17 @@ function pause() {
 var canvases = {
     BC: document.getElementById("BackgroundCanvas"),
     BCctx: undefined,
+    GC: document.getElementById("GhostCanvas"),
+    GCctx: undefined,
     FC: document.getElementById("FrontCanvas"),
     FCctx: undefined,
     init: function () {
-        [this.BC, this.FC].forEach(function (canvas) {
+        [this.BC, this.FC, this.GC].forEach(function (canvas) {
             canvas.width = unit * levels.size[0]
             canvas.height = unit * levels.size[1];
         });
         this.BCctx = this.BC.getContext('2d');
+        this.GCctx = this.GC.getContext('2d');
         this.FCctx = this.FC.getContext('2d');
     }
 }

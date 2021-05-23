@@ -99,3 +99,18 @@ button:hover {
     from { opacity:0 } 
     to { opacity:1 }
 }
+
+#Time {
+    position: absolute;
+    z-index: 3;
+    width: 50px;
+    height: 50px;
+    top: 0;
+    left: 0;
+    background-color: white;
+    color: black;
+}
+
+#GhostCanvas {
+    opacity: 0.5;
+}
