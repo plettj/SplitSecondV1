@@ -2,8 +2,8 @@
 
 // Variables:
 let paused = false;
-let gravity = 1.9; // vertical acceleration
-let friction = 0.7; // coefficient of friction
+let gravity = 1.2; // vertical acceleration
+//let friction = 0.7; // coefficient of friction
 let stepCounter = 0; // animation step digit
 let step = 0; // actual animation step
 let time = 1; // -1 = BACKWARDS TIME
@@ -37,9 +37,9 @@ var avatar = {
     inAir: 0, // 1 = in air
     coor: [200, 400], // position of the avatar, in pixels
     vcoor: [0, 0], // velocity of the avatar
-    maxv: 20, // max speed.
-    xa: [2, 1], // max acceleration: [ground, air].
-    yv: 19, // jump speed.
+    maxv: 5, // max speed.
+    xa: [1, 0.25], // max acceleration: [ground, air].
+    yv: 18, // jump speed.
     size: [40, 40], // size of the avatar.
     img: new Image(),
     init: function () {
@@ -71,17 +71,26 @@ var avatar = {
             [levels.levels[levels.currentLevel][co[1] + 1][co[0] - 1], levels.levels[levels.currentLevel][co[1] + 1][co[0]], levels.levels[levels.currentLevel][co[1] + 1][co[0] + 1]]
         ];
 
+        if (this.inAir && this.vcoor[1] < gravity & Math.ceil(this.coor[1] / unit) > Math.round(this.coor[1] / unit)) {
+            if (blocks[2][1] == 1) this.inAir = 0;
+            else if (Math.floor(this.coor[0] / unit) + 1 !== co[0] && blocks[2][0] == 1) this.inAir = 0;
+            else if (Math.ceil(this.coor[0] / unit) + 1 !== co[0] && blocks[2][2] == 1) this.inAir = 0;
+            else { // "in air"
+                this.inAir = 1;
+            }
+        } else if (this.vcoor[1] < gravity) {
+            if (blocks[2][1] == 1) this.inAir = 0;
+            else if (Math.floor(this.coor[0] / unit) + 1 !== co[0] && blocks[2][0] == 1) this.inAir = 0;
+            else if (Math.ceil(this.coor[0] / unit) + 1 !== co[0] && blocks[2][2] == 1) this.inAir = 0;
+            else { // "in air"
+                this.inAir = 1;
+            }
+        }
+        
         if (this.keys[1] && !this.vcoor[1] && (blocks[2][1] == 1 || blocks[2][0] == 1 || blocks[2][2] == 1)) {
+            console.log("Trying to jump!");
             this.vcoor[1] = this.yv;
             this.inAir = 1;
-        }
-
-        if (blocks[2][1] == 1) this.inAir = 0;
-        else if (Math.floor(this.coor[0] / unit) + 1 !== co[0] && blocks[2][0] == 1) this.inAir = 0;
-        else if (Math.ceil(this.coor[0] / unit) + 1 !== co[0] && blocks[2][2] == 1) this.inAir = 0;
-        else { // "in air"
-            this.inAir = 1;
-            console.log("No ground beneath you.");
         }
 
         
@@ -99,12 +108,29 @@ var avatar = {
 
         if (this.inAir) {
             this.vcoor[1] -= gravity;
+            console.log("No ground beneath you.");
+        } else if (Math.abs(Math.ceil(this.coor[1] / unit) - Math.floor(this.coor[1] / unit)) == 1) {
+            if (this.vcoor[1]) this.coor[1] = Math.ceil(this.coor[1] / unit) * unit;
+            this.vcoor[1] = 0;
         }
 
         // collision detection ought to happen here.
 
         if (Math.abs(this.vcoor[0]) < this.xa[this.inAir] && this.action == 0) this.vcoor[0] = 0;
         if (Math.abs(this.vcoor[0]) > this.maxv) this.vcoor[0] = Math.sign(this.vcoor[0]) * this.maxv;
+
+        if (Math.ceil((this.coor[0] + this.vcoor[0]) / unit) > Math.ceil(this.coor[0] / unit)) { // against right edge.
+            if (blocks[1][2] == 1 || ((this.vcoor[1] / unit) % 1 > 0.15 && blocks[2][2] == 1)) {
+                this.vcoor[0] = 0;
+                this.coor[0] = Math.ceil(this.coor[0] / unit) * unit;
+            }
+        } else if (Math.floor((this.coor[0] + this.vcoor[0]) / unit) < Math.floor(this.coor[0] / unit)) { // against left edge.
+            if (blocks[1][0] == 1) {
+                this.vcoor[0] = 0;
+                this.coor[0] = Math.floor(this.coor[0] / unit) * unit;
+            }
+        }
+
 
         this.coor[0] += this.vcoor[0];
         this.coor[1] -= this.vcoor[1]; // - because down is positive. takes care of all this.
