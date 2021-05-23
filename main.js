@@ -61,6 +61,3 @@ function startGame() {
     canvases.BC.style.backgroundColor = "#08071a";
 }
 
-setTimeout(function () {
-    startGame();
-}, 1000);

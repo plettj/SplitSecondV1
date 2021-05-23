@@ -22,8 +22,18 @@
                 <br>
                 <button onclick="pause()">Continue</button> <br><br><button onclick="startOver()">Restart</button> <br><br><button onclick="location.reload()">Reset Game</button>
             </div>
+        </div>
 
-          </div>
+        <div style="display: block;" class="modalbg" id="modal2">
+            <div class="modal animate-fade">
+                <img id="logo" src="assets/Logo.png">
+                <br>
+                <br>
+                <br>
+                <button onclick="startGame(); hide('modal2')">Play</button>
+            </div>
+        </div>
+
         <div id="splitEffect"></div>
         <div id="startEffect"></div>
     </body>
