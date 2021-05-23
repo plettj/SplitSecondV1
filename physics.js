@@ -23,9 +23,8 @@ function reverseTime() {
 	}, 1100);
 }
 
-var r = true;
 function startOver(level) {
-	if (!r) return;
+    time = 1;
 	document.getElementById('startEffect').style.top = "100%";
 	setTimeout(function () {
 		document.getElementById('startEffect').style.transitionDuration = '0s';
@@ -36,7 +35,15 @@ function startOver(level) {
 		}, 50);
 	}, 1505);
     paused = true;
-    setTimeout(function () {levels.startLevel(level);}, 400);
+    setTimeout(function () {
+        clear(canvases.BCctx);
+        clear(canvases.GCctx);
+        clear(canvases.FCctx);
+        clear(canvases.MCctx);
+    }, 300);
+    setTimeout(function () {
+        levels.startLevel(level);
+    }, 310);
 }
 
 // GameStep + animationStep loop
@@ -68,13 +75,18 @@ function animate() {
                 let ghost = levels.ghosts[g];
                 ghost.newFrame();
             }
-            if (levels.buttons != '') {
+            if (levels.buttons[levels.currentLevel].length > 0) {
                 for (var i = 0; i < levels.buttons[levels.currentLevel].length; i++) {
                     levels.buttons[levels.currentLevel][i].check();
                 }
             }
         }
-        IDs.time.innerHTML = Math.ceil(frame / 60);
+        if ((time > 0 && Math.round(frame / 60) >= 25) || (time < 0 && Math.round(frame / 60) <= 5)) IDs.time.style.color = "#fff2f4";
+        else IDs.time.style.color = "#c47362";
+        IDs.time.innerHTML = Math.round(frame / 60);
+        if (frame >= 1800 || frame <= 0) {
+            startOver(levels.currentLevel);
+        }
 	}
 	raf = window.requestAnimationFrame(animate);
 }

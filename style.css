@@ -7,7 +7,9 @@
 }
 
 body {
-    background-color: #08071a;
+    background-image: url("assets/BackgroundImage.png");
+    background-repeat: no-repeat;
+    background-size: cover;
 }
 
 * {

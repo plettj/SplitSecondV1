@@ -52,12 +52,10 @@ var canvases = {
 
 function startGame() {
     canvases.init();
-    avatar.init();
     levels.init();
     setTimeout(function () {
         animate();
         stepAnimate();
     }, 1000);
-    canvases.BC.style.backgroundColor = "#08071a";
 }
 
