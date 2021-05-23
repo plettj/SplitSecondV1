@@ -6,7 +6,32 @@ function reverseTime() {
     levels.ghosts.push(nextGhost);
     nextGhost = new Ghost();
     nextGhost.init();
-    // Jayden gets to use this to animate when time switches :)
+	document.getElementById('splitEffect').style.width = window.innerWidth + "px";
+	document.getElementById('splitEffect').style.height = window.innerWidth + "px";
+	document.getElementById('splitEffect').style.opacity = '0';
+	setTimeout(function () {
+		document.getElementById('splitEffect').style.transitionDuration = '0s';
+		document.getElementById('splitEffect').style.width = "0";
+		document.getElementById('splitEffect').style.height = "0";
+		document.getElementById('splitEffect').style.opacity = "1";
+		setTimeout(function () {
+			document.getElementById('splitEffect').style.transitionDuration = '1s';
+		}, 300);
+	}, 1100);
+}
+
+var r = true;
+function startOver() {
+	if (!r) return;
+	document.getElementById('startEffect').style.top = "100%";
+	setTimeout(function () {
+		document.getElementById('startEffect').style.transitionDuration = '0s';
+		document.getElementById('startEffect').style.top = unit * -15 + 'px';
+		setTimeout(function () {
+			document.getElementById('startEffect').style.transitionDuration = '1.5s';
+			r = true;
+		}, 50);
+	}, 1505);
 }
 
 // GameStep + animationStep loop
@@ -44,7 +69,7 @@ function animate() {
                 }
             }
         }
-        IDs.time.innerHTML = Math.ceil((frame - 1800) / -60) + "s";
+        IDs.time.innerHTML = Math.ceil((frame - 1800) / -60);
 	}
 	raf = window.requestAnimationFrame(animate);
 }
