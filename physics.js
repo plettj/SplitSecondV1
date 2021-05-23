@@ -2,6 +2,9 @@
 
 function reverseTime() {
     time *= -1;
+    avatar.invincible = 2;
+    setTimeout(function () {avatar.invincible = 1;}, 1300);
+    setTimeout(function () {avatar.invincible = 0;}, 2000);
     nextGhost.finish();
     levels.ghosts.push(nextGhost);
     nextGhost = new Ghost();
@@ -21,7 +24,7 @@ function reverseTime() {
 }
 
 var r = true;
-function startOver() {
+function startOver(level) {
 	if (!r) return;
 	document.getElementById('startEffect').style.top = "100%";
 	setTimeout(function () {
@@ -32,6 +35,8 @@ function startOver() {
 			r = true;
 		}, 50);
 	}, 1505);
+    paused = true;
+    setTimeout(function () {levels.startLevel(level);}, 400);
 }
 
 // GameStep + animationStep loop
