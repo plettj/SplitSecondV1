@@ -51,11 +51,12 @@ var canvases = {
 }
 
 function startGame() {
+    show('pauseBtn');
     canvases.init();
     levels.init();
     setTimeout(function () {
         animate();
         stepAnimate();
-    }, 1000);
+    }, 50);
 }
 
