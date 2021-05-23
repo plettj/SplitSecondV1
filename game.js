@@ -31,11 +31,12 @@ function keyPressed(code, num) {
 	else if (code === 87 || code === 32) avatar.keys[1] = num; // Up
 	else if (code === 68) avatar.keys[2] = num; // Right
 	else if (code === 83) avatar.keys[3] = num; // Down
-    else if ((code === 67 || code === 69 || code === 88) && num) reverseTime();
+    else if ((code === 67 || code === 69 || code === 88) && num && !avatar.invincible) reverseTime();
 }
 
 var avatar = {
     keys: [0, 0, 0, 0], // [A, W, D, S] 1 = down.
+    invincible: 0, // can't be killed by ghosts.
     action: 0, // 0-still 1-left 2-right
     dir: 0, // 0-left 1-right
     inAir: 0, // 1 = in air
@@ -113,7 +114,6 @@ var avatar = {
             this.keys[1] = 0;
         }
 
-        
         switch (this.action) {
             case 0: // stopped.
                 this.vcoor[0] = Math.sign(this.vcoor[0]) * (Math.abs(this.vcoor[0]) - this.xa[this.inAir]);
@@ -137,13 +137,14 @@ var avatar = {
         // collisions left and right
         if (Math.ceil((this.coor[0] + this.vcoor[0] * 1.5) / unit) > Math.ceil(this.coor[0] / unit)) { // against right edge.
             let y = Math.ceil(this.coor[1] / unit) + 1;
-            if (blocks[1][2] == 1 || levels.levels[levels.currentLevel][y][co[0] + 1] == 1) {
+            if ((blocks[1][2] == 1 || blocks[1][2] == 3) || (levels.levels[levels.currentLevel][y][co[0] + 1] == 1 || levels.levels[levels.currentLevel][y][co[0] + 1] == 3)) {
+                if (co[0] >= levels.size[0] - 1) {startOver(levels.currentLevel + 1); return;}
                 this.vcoor[0] = 0;
                 this.coor[0] = Math.ceil(this.coor[0] / unit) * unit;
             }
         } else if (Math.floor((this.coor[0] + this.vcoor[0] * 1.5) / unit) < Math.floor(this.coor[0] / unit)) { // against left edge.
             let y = Math.ceil(this.coor[1] / unit) + 1;
-            if (blocks[1][0] == 1 || levels.levels[levels.currentLevel][y][co[0] - 1] == 1) {
+            if ((blocks[1][0] == 1 || blocks[1][0] == 3) || (levels.levels[levels.currentLevel][y][co[0] - 1] == 1 || levels.levels[levels.currentLevel][y][co[0] - 1] == 3)) {
                 this.vcoor[0] = 0;
                 this.coor[0] = Math.floor(this.coor[0] / unit) * unit;
             }
@@ -161,6 +162,23 @@ var avatar = {
             if (this.dir && blocks[1][2] !== 1) this.coor[0] = Math.round(this.coor[0] / unit + 1) * unit;
             else if (blocks[1][0] == 1) this.coor[0] = Math.round(this.coor[0] / unit + 1) * unit;
             else this.coor[0] = Math.round(this.coor[0] / unit - 1) * unit;
+        } else if (blocks[1][1] == 3) {
+            startOver(levels.currentLevel); return;
+        } else if (blocks[1][1] == 4 || (Math.floor(this.coor[0] / unit + 0.3) + 1 !== co[0] && blocks[1][0] == 4) || (Math.ceil(this.coor[0] / unit - 0.3) + 1 !== co[0] && blocks[1][2] == 4)) {
+            startOver(levels.currentLevel); return;
+        }
+
+        if (this.invincible !== 2) {
+            for (g = 0; g < levels.ghosts.length; g++) {
+                let ghost = levels.ghosts[g];
+                if (!ghost.waiting) {
+                    let XD = Math.abs(ghost.instructions[ghost.frame][0] - this.coor[0]);
+                    let YD = Math.abs(ghost.instructions[ghost.frame][1] - this.coor[1]);
+                    if (Math.sqrt(XD * XD + YD * YD) < unit * 0.75) {
+                        startOver(levels.currentLevel); return;
+                    }
+                }
+            }
         }
 
         this.draw([step, this.dir + this.inAir * 2]);
@@ -184,6 +202,14 @@ function Button(x, y, dir, colour, mechanics) {
     this.target = 0; // mechanic animation target.
     this.pressed = 0;
     this.coor = [x * unit, y * unit];
+    this.init = function () {
+        this.frame = 0;
+        this.tarCur = 1;
+        this.target = 0;
+        this.pressed = 0;
+        this.draw();
+        this.drawMechanics();
+    }
     this.check = function () {
         this.pressed = 0;
         for (let g = 0; g < levels.ghosts.length; g++) {
@@ -308,7 +334,6 @@ var levels = {
     addLevel: function (values, buttons) {
         this.levels.push(values);
         this.buttons.push(buttons);
-        console.log(this.buttons);
     },
     drawLevel: function (level, side) {
         clear(canvases.BCctx);
@@ -325,11 +350,11 @@ var levels = {
                         if (l[j][i + 1] == 1) blocks[0] = 0;
                         if (l[j - 1][i] == 1) blocks[2] = 0;
                         if (l[j + 1][i] == 1) blocks[3] = 0;
-                        if (!blocks[1] && !blocks[2] && l[j - 1][i - 1] !== 1) canvases.BCctx.drawImage(this.ground, 400, 0, 100, 100, i * unit + side * unit * 20 - unit, j * unit - unit, unit, unit);
-                        if (!blocks[0] && !blocks[2] && l[j - 1][i + 1] !== 1) canvases.BCctx.drawImage(this.ground, 400, 100, 100, 100, i * unit + side * unit * 20 - unit, j * unit - unit, unit, unit);
-                        if (!blocks[0] && !blocks[3] && l[j + 1][i + 1] !== 1) canvases.BCctx.drawImage(this.ground, 400, 200, 100, 100, i * unit + side * unit * 20 - unit, j * unit - unit, unit, unit);
-                        if (!blocks[1] && !blocks[3] && l[j + 1][i - 1] !== 1) canvases.BCctx.drawImage(this.ground, 400, 300, 100, 100, i * unit + side * unit * 20 - unit, j * unit - unit, unit, unit);
-                        canvases.BCctx.drawImage(this.ground, (blocks[1] + 2 * blocks[0]) * 100, (blocks[2] + 2 * blocks[3]) * 100, 100, 100, i * unit + side * unit * 20 - unit, j * unit - unit, unit, unit);
+                        if (!blocks[1] && !blocks[2] && l[j - 1][i - 1] !== 1) canvases.BCctx.drawImage(this.ground, 400, 0, 100, 100, i * unit - unit, j * unit - unit, unit, unit);
+                        if (!blocks[0] && !blocks[2] && l[j - 1][i + 1] !== 1) canvases.BCctx.drawImage(this.ground, 400, 100, 100, 100, i * unit - unit, j * unit - unit, unit, unit);
+                        if (!blocks[0] && !blocks[3] && l[j + 1][i + 1] !== 1) canvases.BCctx.drawImage(this.ground, 400, 200, 100, 100, i * unit - unit, j * unit - unit, unit, unit);
+                        if (!blocks[1] && !blocks[3] && l[j + 1][i - 1] !== 1) canvases.BCctx.drawImage(this.ground, 400, 300, 100, 100, i * unit - unit, j * unit - unit, unit, unit);
+                        canvases.BCctx.drawImage(this.ground, (blocks[1] + 2 * blocks[0]) * 100, (blocks[2] + 2 * blocks[3]) * 100, 100, 100, i * unit - unit, j * unit - unit, unit, unit);
                         break;
                     case 2:
                         avatar.coor = [(i - 1) * unit, (j - 1) * unit];
@@ -339,8 +364,7 @@ var levels = {
         }
         if (levels.buttons[levels.currentLevel] != '') {
 			for (var i = 0; i < levels.buttons[levels.currentLevel].length; i++) {
-				levels.buttons[levels.currentLevel][i].draw();
-				levels.buttons[levels.currentLevel][i].drawMechanics();
+				levels.buttons[levels.currentLevel][i].init();
 			}
 		}
     },
@@ -348,11 +372,12 @@ var levels = {
         time = 1;
         frame = 0;
         stepCounter = 0;
-        levels.drawLevel(level, 0); // change 0 to 1 for animation system.
+        paused = false;
+        this.drawLevel(level);
+        this.ghosts = [];
         nextGhost = new Ghost();
         nextGhost.init();
-        levels.currentLevel = level;
-        console.log(this.levels[this.currentLevel]);
+        this.currentLevel = level;
     }
 }
 
@@ -364,10 +389,10 @@ levels.addLevel(
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
-        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
-        [1, 0, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
+        [1, 2, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
         [1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -385,14 +410,14 @@ levels.addLevel(
 levels.addLevel(
     [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
         [1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
-        [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
-        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
+        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
         [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
-        [1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1],
-        [1, 0, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1],
+        [1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1],
+        [1, 2, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
