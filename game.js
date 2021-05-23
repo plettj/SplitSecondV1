@@ -2,7 +2,8 @@
 
 // Variables:
 let paused = false;
-let gravity = 1.2 / 56 * unit; // vertical acceleration
+let gravity = 1.2; // vertical acceleration
+//let friction = 0.7; // coefficient of friction
 let stepCounter = 0; // animation step digit
 let step = 0; // actual animation step
 let time = 1; // -1 = BACKWARDS TIME
@@ -10,7 +11,7 @@ let frame = 0; // CORE OPERATION: up when forward, down when backward!!!!
 
 function clear(context, coor) {
     if (!coor) context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    else context.clearRect(coor[0] - unit / 10, coor[1] - unit / 10, unit * 1.2, unit * 1.2);
+    else context.clearRect(coor[0], coor[1], unit, unit);
 }
 
 document.addEventListener("keydown", function(event) {
@@ -34,11 +35,12 @@ var avatar = {
     action: 0, // 0-still 1-left 2-right
     dir: 0, // 0-left 1-right
     inAir: 0, // 1 = in air
-    coor: [0, 0], // position of the avatar, in pixels
+    coor: [200, 400], // position of the avatar, in pixels
     vcoor: [0, 0], // velocity of the avatar
-    maxv: 6 / 56 * unit, // max speed.
-    xa: [1 / 56 * unit, 1 / 100 * unit], // max acceleration: [ground, air].
-    yv: 18 / 56 * unit, // jump speed.
+    maxv: 5, // max speed.
+    xa: [1, 0.25], // max acceleration: [ground, air].
+    yv: 18, // jump speed.
+    size: [40, 40], // size of the avatar.
     img: new Image(),
     init: function () {
         this.img.src = "assets/AvatarTileset.png";
@@ -59,10 +61,8 @@ var avatar = {
             this.action = 2;
             this.dir = 1;
         }
-        
-        if (Math.abs(this.vcoor[0]) < this.xa[this.inAir] && this.action == 0) this.vcoor[0] = 0;
-        if (Math.abs(this.vcoor[0]) > this.maxv) this.vcoor[0] = Math.sign(this.vcoor[0]) * this.maxv;
 
+        // up down left right
         let co = [Math.round(this.coor[0] / unit) + 1, Math.round(this.coor[1] / unit) + 1]; // current co
 
         let blocks = [
@@ -71,8 +71,7 @@ var avatar = {
             [levels.levels[levels.currentLevel][co[1] + 1][co[0] - 1], levels.levels[levels.currentLevel][co[1] + 1][co[0]], levels.levels[levels.currentLevel][co[1] + 1][co[0] + 1]]
         ];
 
-        // collisions downward.
-        if (this.inAir && this.vcoor[1] < gravity && Math.ceil(this.coor[1] / unit) > Math.round(this.coor[1] / unit)) {
+        if (this.inAir && this.vcoor[1] < gravity & Math.ceil(this.coor[1] / unit) > Math.round(this.coor[1] / unit)) {
             if (blocks[2][1] == 1) this.inAir = 0;
             else if (Math.floor(this.coor[0] / unit) + 1 !== co[0] && blocks[2][0] == 1) this.inAir = 0;
             else if (Math.ceil(this.coor[0] / unit) + 1 !== co[0] && blocks[2][2] == 1) this.inAir = 0;
@@ -87,24 +86,10 @@ var avatar = {
                 this.inAir = 1;
             }
         }
-
-        // collisions upward
-        if (this.inAir && this.vcoor[1] > -1 * gravity) {
-            let y = Math.ceil(this.coor[1] / unit);
-            if (levels.levels[levels.currentLevel][y][co[0]] == 1) this.vcoor[1] = 0;
-            else if (Math.floor(this.coor[0] / unit) + 1 !== co[0] && levels.levels[levels.currentLevel][y][co[0] - 1] == 1) this.vcoor[1] = 0;
-            else if (Math.ceil(this.coor[0] / unit) + 1 !== co[0] && levels.levels[levels.currentLevel][y][co[0] + 1] == 1) this.vcoor[1] = 0;
-        }
         
         if (this.keys[1] && !this.vcoor[1] && (blocks[2][1] == 1 || blocks[2][0] == 1 || blocks[2][2] == 1)) {
             console.log("Trying to jump!");
-            let y = Math.ceil(this.coor[1] / unit);
-            let roof = false;
-            if (levels.levels[levels.currentLevel][y][co[0]] == 1) roof = true;
-            else if (Math.floor(this.coor[0] / unit) + 1 !== co[0] && levels.levels[levels.currentLevel][y][co[0] - 1] == 1) roof = true;
-            else if (Math.ceil(this.coor[0] / unit) + 1 !== co[0] && levels.levels[levels.currentLevel][y][co[0] + 1] == 1) roof = true;
-            if (!roof) this.vcoor[1] = this.yv;
-            else this.vcoor[1] = unit / 20;
+            this.vcoor[1] = this.yv;
             this.inAir = 1;
         }
 
@@ -123,27 +108,29 @@ var avatar = {
 
         if (this.inAir) {
             this.vcoor[1] -= gravity;
+            console.log("No ground beneath you.");
         } else if (Math.abs(Math.ceil(this.coor[1] / unit) - Math.floor(this.coor[1] / unit)) == 1) {
-            console.log("Snapping, vertically: %% = " + ((this.vcoor[1] / unit) % 1));
-            if (Math.abs(this.vcoor[1] / unit) % 1 > 0.8 && this.vcoor[1]) this.coor[1] = Math.floor(this.coor[1] / unit) * unit;
-            else if (this.vcoor[1] && (Math.abs(this.vcoor[1] / unit) % 1 > 0.216 || Math.abs(this.vcoor[1] / unit) % 1 < 0.212)) this.coor[1] = Math.ceil(this.coor[1] / unit) * unit;
+            if (this.vcoor[1]) this.coor[1] = Math.ceil(this.coor[1] / unit) * unit;
             this.vcoor[1] = 0;
         }
 
-        // collisions left and right
-        if (Math.ceil((this.coor[0] + this.vcoor[0] * 1.5) / unit) > Math.ceil(this.coor[0] / unit)) { // against right edge.
-            let y = Math.ceil(this.coor[1] / unit) + 1;
-            if (blocks[1][2] == 1 || levels.levels[levels.currentLevel][y][co[0] + 1] == 1) {
+        // collision detection ought to happen here.
+
+        if (Math.abs(this.vcoor[0]) < this.xa[this.inAir] && this.action == 0) this.vcoor[0] = 0;
+        if (Math.abs(this.vcoor[0]) > this.maxv) this.vcoor[0] = Math.sign(this.vcoor[0]) * this.maxv;
+
+        if (Math.ceil((this.coor[0] + this.vcoor[0]) / unit) > Math.ceil(this.coor[0] / unit)) { // against right edge.
+            if (blocks[1][2] == 1 || ((this.vcoor[1] / unit) % 1 > 0.15 && blocks[2][2] == 1)) {
                 this.vcoor[0] = 0;
                 this.coor[0] = Math.ceil(this.coor[0] / unit) * unit;
             }
-        } else if (Math.floor((this.coor[0] + this.vcoor[0] * 1.5) / unit) < Math.floor(this.coor[0] / unit)) { // against left edge.
-            let y = Math.ceil(this.coor[1] / unit) + 1;
-            if (blocks[1][0] == 1 || levels.levels[levels.currentLevel][y][co[0] - 1] == 1) {
+        } else if (Math.floor((this.coor[0] + this.vcoor[0]) / unit) < Math.floor(this.coor[0] / unit)) { // against left edge.
+            if (blocks[1][0] == 1) {
                 this.vcoor[0] = 0;
                 this.coor[0] = Math.floor(this.coor[0] / unit) * unit;
             }
         }
+
 
         this.coor[0] += this.vcoor[0];
         this.coor[1] -= this.vcoor[1]; // - because down is positive. takes care of all this.
@@ -201,19 +188,19 @@ var levels = {
 
 levels.addLevel([
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
-    [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
-    [1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
-    [1, 0, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1],
-    [1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1],
-    [1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
+    [1, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
+    [1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ]);
