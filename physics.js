@@ -27,6 +27,11 @@ function stepAnimate() {
 
 function animate() {
 	if (!paused) {
+		if (levels.buttons != '') {
+			for (var i = 0; i < levels.buttons.length; i++) {
+				levels.buttons[i].check();
+			}
+		}
 		avatar.physics();
         frame += time;
         if (!(frame % GFuel)) { // Run the Ghosts!!

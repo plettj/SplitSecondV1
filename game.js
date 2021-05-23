@@ -169,6 +169,49 @@ var avatar = {
     }
 }
 
+
+var buttonImg = new Image();
+buttonImg.src = "assets/ButtonTileset2.png";
+
+function Button(x, y, dir, colour, interact) {
+    //dir should be 0 (<) or 1 (>)
+    this.frame = 0;
+    this.dir = dir;
+    this.colour = colour;
+    this.interact = interact;
+    this.pressed = 0;
+    this.coor = [x * unit, y * unit];
+}
+Button.prototype.check = function () {
+    //console.log(Math.round(avatar.coor[0] / unit * 10)/10);
+    //console.log(this.coor[0] / unit);
+    //x
+    if ((this.dir == 0 && Math.round(avatar.coor[0] / unit * 10)/10 <= this.coor[0] / unit + 0.1 && Math.round(avatar.coor[0] / unit * 10)/10 >= this.coor[0] / unit) || (this.dir == 1 && Math.round(avatar.coor[0] / unit * 10)/10 >= this.coor[0] / unit - 0.1 && Math.round(avatar.coor[0] / unit * 10)/10 <= this.coor[0] / unit)) {
+        if (Math.ceil(avatar.coor[1] / unit) == this.coor[1] / unit && Math.floor(avatar.coor[1] / unit) == this.coor[1] / unit) {
+            this.pressed = 1;
+            this.frames();
+        } else this.pressed = 0;
+    } else this.pressed = 0;
+    //y
+
+}
+Button.prototype.frames = function () {
+    var t = this;
+    if (this.pressed) {
+        clear(canvases.MCctx, this.coor);
+        this.frame += 1 * this.pressed;
+        if (this.frame < 3) this.draw([this.frame, 0]);
+        else return;
+    } else {
+
+    }
+    
+    setTimeout(function () {t.frames();}, 1000);
+}
+Button.prototype.draw = function (a) {
+    canvases.MCctx.drawImage(buttonImg, (a[0] + this.dir*3) * 100, (a[1] + this.colour) * 100, 100, 100, this.coor[0], this.coor[1], unit, unit);
+}
+
 function Ghost() {
     this.time = time; // this ghost's native direction
     this.life = [0, 1800] // lifetime = [startingFrame, endingFrame]
@@ -228,6 +271,7 @@ var levels = {
     levels: [],
     ghosts: [],
     currentLevel: 0,
+    buttons: [],
     ground: new Image(),
     init: function () {
         this.ground.src = "assets/BlockTileset2.png";
@@ -235,8 +279,10 @@ var levels = {
             levels.startLevel(0);
         }
     },
-    addLevel: function (values) {
+    addLevel: function (values, buttons) {
         this.levels.push(values);
+        this.buttons = buttons;
+        console.log(this.buttons);
     },
     drawLevel: function (level, side) {
         for (let i = 1; i <= this.size[0]; i++) {
@@ -261,6 +307,11 @@ var levels = {
                 }
             }
         }
+        if (levels.buttons != '') {
+			for (var i = 0; i < levels.buttons.length; i++) {
+				levels.buttons[i].draw([0, 0]);
+			}
+		}
     },
     startLevel: function (level) {
         time = 1;
@@ -285,6 +336,26 @@ levels.addLevel([
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
+    [1, 0, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+],
+[new Button(6, 6, 1, 0), new Button(9, 6, 0, 0)]);
+
+/*levels.addLevel([
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
     [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
@@ -298,4 +369,4 @@ levels.addLevel([
     [1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1],
     [1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-]);
+]);*/
