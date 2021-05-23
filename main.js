@@ -29,13 +29,17 @@ var canvases = {
     BCctx: undefined,
     FC: document.getElementById("FrontCanvas"),
     FCctx: undefined,
+    MC: document.getElementById("MechanicsCanvas"),
+    MCctx: undefined,
     init: function () {
-        [this.BC, this.FC].forEach(function (canvas) {
+        [this.BC, this.FC, this.MC].forEach(function (canvas) {
             canvas.width = unit * levels.size[0]
             canvas.height = unit * levels.size[1];
         });
+        
         this.BCctx = this.BC.getContext('2d');
         this.FCctx = this.FC.getContext('2d');
+        this.MCctx = this.MC.getContext('2d');
     }
 }
 

@@ -18,6 +18,11 @@ function stepAnimate() {
 // Frame-by-frame animation
 function animate() {
 	if (!paused) {
+		if (levels.buttons != '') {
+			for (var i = 0; i < levels.buttons.length; i++) {
+				levels.buttons[i].check();
+			}
+		}
 		avatar.physics();
 	}
 	raf = window.requestAnimationFrame(animate);
