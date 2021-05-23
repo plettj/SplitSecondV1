@@ -31,7 +31,7 @@ canvas {
 }
 
 button {
-    padding: 0px;
+    padding: 20px;
     border: none;
     border-radius: 0px;
     background-color: var(--blue);
@@ -69,6 +69,7 @@ button:hover {
     background-color: white;
     border-radius: none;
     transition-duration: 1s;
+    z-index: 5;
 }
 
 .modalbg {
@@ -100,17 +101,57 @@ button:hover {
     to { opacity:1 }
 }
 
-#Time {
+.box-container {
     position: absolute;
     z-index: 3;
-    width: 50px;
-    height: 50px;
-    top: 0;
     left: 0;
-    background-color: white;
-    color: black;
+    top: var(--pixel);
+    position: absolute;
+    width: 100%;
+    height: calc(var(--pixel)*7);
+}
+
+#Time {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    color: #c47362;
+    font-size: calc(var(--pixel)*7);
 }
 
 #GhostCanvas {
     opacity: 0.5;
+}
+
+#splitEffect {
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    width: 0;
+    height: 0;
+    position: absolute;
+    z-index: 7;
+    border-radius: 100%;
+    transition-duration: 1s;
+    opacity: 1;
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+#startEffect {
+    position: absolute;
+    z-index: 3;
+    left: 0;
+    top: calc(var(--unit)*-15);
+    position: absolute;
+    width: 100%;
+    height: calc(var(--unit)*15);
+    transition-duration: 1.5s;
+    background-color: #08071a;
 }
