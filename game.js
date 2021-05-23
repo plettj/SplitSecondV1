@@ -7,11 +7,15 @@ let stepCounter = 0; // animation step digit
 let step = 0; // actual animation step
 let time = 1; // -1 = BACKWARDS TIME
 let frame = 0; // CORE OPERATION: up when forward, down when backward!!!!
+let GFuel = 3; // number of frames between each Ghost's learning.
+var nextGhost = undefined;
 
 function clear(context, coor) {
     if (!coor) context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    else context.clearRect(coor[0] - unit / 10, coor[1] - unit / 10, unit * 1.2, unit * 1.2);
+    else context.clearRect(coor[0] - unit / 40, coor[1] - unit / 40, unit * 1.05, unit * 1.05);
 }
+
+function between([a, b], num) {return num >= Math.min(a, b) && num <= Math.max(a, b);}
 
 document.addEventListener("keydown", function(event) {
 	keyPressed(event.keyCode, 1);
@@ -27,6 +31,7 @@ function keyPressed(code, num) {
 	else if (code === 87 || code === 32) avatar.keys[1] = num; // Up
 	else if (code === 68) avatar.keys[2] = num; // Right
 	else if (code === 83) avatar.keys[3] = num; // Down
+    else if ((code === 67 || code === 69 || code === 88) && num) reverseTime();
 }
 
 var avatar = {
@@ -146,8 +151,19 @@ var avatar = {
             }
         }
 
+        if (!this.inAir && this.vcoor[1] == 0 && Math.abs(this.coor[1] / unit) % 1 !== 0) {
+            this.coor[1] = Math.round(this.coor[1] / unit) * unit;
+        }
+
         this.coor[0] += this.vcoor[0];
         this.coor[1] -= this.vcoor[1]; // - because down is positive. takes care of all this.
+
+        // inside a block??
+        if (blocks[1][1] == 1) {
+            if (this.dir && blocks[1][2] !== 1) this.coor[0] = Math.round(this.coor[0] / unit + 1) * unit;
+            else if (blocks[1][0] == 1) this.coor[0] = Math.round(this.coor[0] / unit + 1) * unit;
+            else this.coor[0] = Math.round(this.coor[0] / unit - 1) * unit;
+        }
 
         this.draw([step, this.dir + this.inAir * 2]);
     }
@@ -196,16 +212,69 @@ Button.prototype.draw = function (a) {
     canvases.MCctx.drawImage(buttonImg, (a[0] + this.dir*3) * 100, (a[1] + this.colour) * 100, 100, 100, this.coor[0], this.coor[1], unit, unit);
 }
 
-
+function Ghost() {
+    this.time = time; // this ghost's native direction
+    this.life = [0, 1800] // lifetime = [startingFrame, endingFrame]
+    this.coor1 = [0, 0]; // life began here.
+    this.coor2 = [0, 0]; // life ended here.
+    this.instructions = []; // [x, y, dir, inAir]
+    this.frame = 0; // location in instructions
+    this.waiting = false;
+    this.init = function () {
+        this.life[0] = frame;
+        this.time = time;
+        this.coor1 = [avatar.coor[0], avatar.coor[1]];
+    }
+    this.learn = function () {
+        this.instructions.push([Math.round(avatar.coor[0]), Math.round(avatar.coor[1]), avatar.dir, avatar.inAir]);
+    }
+    this.draw = function (draw = true) {
+        if (this.frame < 0 || this.frame >= this.instructions.length) {
+            if (this.frame < 0) this.frame = 0;
+            else this.frame = this.instructions.length - 1;
+        }
+        console.log(this.instructions.length);
+        console.log(this.frame);
+        var a = this.instructions[this.frame];
+        console.log(a);
+        if (!draw) clear(canvases.GCctx, [a[0], a[1]]);
+        else canvases.GCctx.drawImage(avatar.img, step * 100, (a[2] + a[3] * 2) * 100, 100, 100, a[0], a[1], unit, unit);;
+    }
+    this.newFrame = function () {
+        if (!this.waiting) { // ghost is waiting for a call to action.
+            if (between(this.life, frame)) { // ghost exists at this time.
+                this.draw(false);
+                this.frame += time * this.time;
+                this.draw();
+            } else { // ghost does not exist.
+                this.draw(false);
+                this.waiting = true;
+            }
+        } else { // ghost DEFINITELY doesn't exist.
+            if (between(this.life, frame)) { // ghost exists at this time.
+                this.waiting = false;
+                this.draw();
+            }
+        }
+    }
+    this.finish = function () {
+        this.frame = this.instructions.length - 1;
+        this.draw();
+        this.life[1] = frame;
+        this.coor2 = [avatar.coor[0], avatar.coor[1]];
+        this.waiting = false;
+    }
+}
 
 var levels = {
     size: [20, 14], // height of 14, but we will only use the top 10.
     levels: [],
+    ghosts: [],
     currentLevel: 0,
     buttons: [],
     ground: new Image(),
     init: function () {
-        this.ground.src = "assets/BlockTileset.png";
+        this.ground.src = "assets/BlockTileset2.png";
         this.ground.onload = function () {
             levels.startLevel(0);
         }
@@ -221,10 +290,15 @@ var levels = {
                 switch (this.levels[level][j][i]) {
                     case 1:
                         let blocks = [1, 1, 1, 1];
-                        if (levels.levels[level][j][i - 1] == 1) blocks[1] = 0;
-                        if (levels.levels[level][j][i + 1] == 1) blocks[0] = 0;
-                        if (levels.levels[level][j - 1][i] == 1) blocks[2] = 0;
-                        if (levels.levels[level][j + 1][i] == 1) blocks[3] = 0;
+                        let l = levels.levels[level]
+                        if (l[j][i - 1] == 1) blocks[1] = 0;
+                        if (l[j][i + 1] == 1) blocks[0] = 0;
+                        if (l[j - 1][i] == 1) blocks[2] = 0;
+                        if (l[j + 1][i] == 1) blocks[3] = 0;
+                        if (!blocks[1] && !blocks[2] && l[j - 1][i - 1] !== 1) canvases.BCctx.drawImage(this.ground, 400, 0, 100, 100, i * unit + side * unit * 20 - unit, j * unit - unit, unit, unit);
+                        if (!blocks[0] && !blocks[2] && l[j - 1][i + 1] !== 1) canvases.BCctx.drawImage(this.ground, 400, 100, 100, 100, i * unit + side * unit * 20 - unit, j * unit - unit, unit, unit);
+                        if (!blocks[0] && !blocks[3] && l[j + 1][i + 1] !== 1) canvases.BCctx.drawImage(this.ground, 400, 200, 100, 100, i * unit + side * unit * 20 - unit, j * unit - unit, unit, unit);
+                        if (!blocks[1] && !blocks[3] && l[j + 1][i - 1] !== 1) canvases.BCctx.drawImage(this.ground, 400, 300, 100, 100, i * unit + side * unit * 20 - unit, j * unit - unit, unit, unit);
                         canvases.BCctx.drawImage(this.ground, (blocks[1] + 2 * blocks[0]) * 100, (blocks[2] + 2 * blocks[3]) * 100, 100, 100, i * unit + side * unit * 20 - unit, j * unit - unit, unit, unit);
                         break;
                     case 2:
@@ -240,11 +314,18 @@ var levels = {
 		}
     },
     startLevel: function (level) {
+        time = 1;
+        frame = 0;
+        stepCounter = 0;
         levels.drawLevel(level, 0); // change 0 to 1 for animation system.
+        nextGhost = new Ghost();
+        nextGhost.init();
+
         // draw new level on right of canvas.
         // animate (css) towards new level.
         // erase previous level; redraw current level on left of canvas.
         // start game.
+
         levels.currentLevel = level;
     }
 }
@@ -275,12 +356,12 @@ levels.addLevel([
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
+    [1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
     [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
     [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
-    [1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
-    [1, 0, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
+    [1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1],
+    [1, 0, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],

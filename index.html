@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>Timi Reversi</title>
+        <title>Jimmi Reversi</title>
         <!--<link rel="icon" href="favicon.png">-->
         <link rel="stylesheet" href="style.css">
     </head>
@@ -11,6 +11,8 @@
             <img src="assets/pauseBtn.png" class="pauseBtn" id="pauseBtn" onclick="pause()">
         </div>
         
+        <div id="Time">The inner-html of this will be updated by the frame value of the game.</div>
+
         <div class="modalbg" id="modal1">
             <div class="modal animate-fade">
                 <h1>Game Paused</h1>
@@ -22,6 +24,9 @@
     <!--For everything that's static-->
 	<canvas id="BackgroundCanvas"></canvas>
     <!--For the avatar, ghosts, and mechanics in the front-->
+    <!--For the ghosts-->
+    <canvas id="GhostCanvas"></canvas>
+    <!--For the avatar in front-->
     <canvas id="FrontCanvas"></canvas>
     <canvas id="MechanicsCanvas"></canvas>
 
