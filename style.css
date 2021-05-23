@@ -6,6 +6,10 @@
     --blue: #4da6ff;
 }
 
+body {
+    background-color: #08071a;
+}
+
 * {
     overflow: hidden;
     font-family: sans-serif;
@@ -44,32 +48,33 @@ button {
 }
 
 button:hover {
-    background-color: white;
-    color: var(--blue);
+    background-color: #61c5ff;
+    color: white;
 }
 
 .ui {
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: var(--unit);
     z-index: 4;
     position: absolute;
 }
 
 .modal {
-    padding: 10px 20px;
-    width: 50%;
+    padding: 60px 120px;
+    width: 25%;
     margin: 0;
     position: absolute;
     top: 50%;
     left: 50%;
     -ms-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
-    background-color: white;
     border-radius: none;
     transition-duration: 1s;
     z-index: 5;
+    color: white;
+    text-align: center;
 }
 
 .modalbg {
@@ -79,7 +84,7 @@ button:hover {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(8, 7, 26, 0.75);
     display: none;
 }
 

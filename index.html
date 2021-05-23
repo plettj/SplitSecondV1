@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>Jimmi Reversi</title>
+        <title>Split Second</title>
         <!--<link rel="icon" href="favicon.png">-->
         <link rel="stylesheet" href="style.css">
     </head>
@@ -11,11 +11,16 @@
             <img src="assets/pauseBtn.png" class="pauseBtn" id="pauseBtn" onclick="pause()">
         </div>
       
-        <div class="box-container"><h1 id="Time"></h1></div>
+        <div class="box-container"><p></p><h1 id="Time"></h1></div>
+        <div style="z-index: 0;" class="box-container"><h1 id="arrow"></h1></div>
 
         <div class="modalbg" id="modal1">
             <div class="modal animate-fade">
                 <h1>Game Paused</h1>
+                <br>
+                <br>
+                <br>
+                <button onclick="pause()">Continue</button> <br><br><button onclick="startOver()">Restart</button> <br><br><button onclick="location.reload()">Reset Game</button>
             </div>
 
           </div>
