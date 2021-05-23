@@ -36,7 +36,15 @@ function startOver(level) {
 		}, 50);
 	}, 1505);
     paused = true;
-    setTimeout(function () {levels.startLevel(level);}, 400);
+    setTimeout(function () {
+        clear(canvases.BCctx);
+        clear(canvases.GCctx);
+        clear(canvases.FCctx);
+        clear(canvases.MCctx);
+    }, 300);
+    setTimeout(function () {
+        levels.startLevel(level);
+    }, 500);
 }
 
 // GameStep + animationStep loop
@@ -68,7 +76,7 @@ function animate() {
                 let ghost = levels.ghosts[g];
                 ghost.newFrame();
             }
-            if (levels.buttons != '') {
+            if (levels.buttons[levels.currentLevel].length > 0) {
                 for (var i = 0; i < levels.buttons[levels.currentLevel].length; i++) {
                     levels.buttons[levels.currentLevel][i].check();
                 }

@@ -10,6 +10,9 @@ body {
     background-color: #08071a;
 }
 
+img {
+}
+
 * {
     overflow: hidden;
     font-family: sans-serif;

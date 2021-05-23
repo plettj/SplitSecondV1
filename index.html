@@ -8,7 +8,7 @@
     </head>
     <body>
         <div class="ui">
-            <img src="assets/pauseBtn.png" class="pauseBtn" id="pauseBtn" onclick="pause()">
+            <img draggable="false" src="assets/pauseBtn.png" class="pauseBtn" id="pauseBtn" onclick="pause()">
         </div>
       
         <div class="box-container"><p></p><h1 id="Time"></h1></div>
@@ -20,7 +20,7 @@
                 <br>
                 <br>
                 <br>
-                <button onclick="pause()">Continue</button> <br><br><button onclick="startOver()">Restart</button> <br><br><button onclick="location.reload()">Reset Game</button>
+                <button onclick="pause()">Continue</button> <br><br><button onclick="pause(); paused = false; startOver();">Restart</button> <br><br><button onclick="location.reload()">Reset Game</button>
             </div>
 
           </div>

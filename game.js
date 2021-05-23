@@ -24,6 +24,8 @@ document.addEventListener("keyup", function(event) {
 	keyPressed(event.keyCode, 0);
 });
 
+document.addEventListener('contextmenu', event => event.preventDefault());
+
 // Event processor!
 function keyPressed(code, num) {
 	if (code > 36 && code < 41) avatar.keys[code - 37] = num;
@@ -38,7 +40,7 @@ var avatar = {
     keys: [0, 0, 0, 0], // [A, W, D, S] 1 = down.
     invincible: 0, // can't be killed by ghosts.
     action: 0, // 0-still 1-left 2-right
-    dir: 0, // 0-left 1-right
+    dir: 1, // 0-left 1-right
     inAir: 0, // 1 = in air
     coor: [0, 0], // position of the avatar, in pixels
     vcoor: [0, 0], // velocity of the avatar
@@ -138,7 +140,7 @@ var avatar = {
         if (Math.ceil((this.coor[0] + this.vcoor[0] * 1.5) / unit) > Math.ceil(this.coor[0] / unit)) { // against right edge.
             let y = Math.ceil(this.coor[1] / unit) + 1;
             if ((blocks[1][2] == 1 || blocks[1][2] == 3) || (levels.levels[levels.currentLevel][y][co[0] + 1] == 1 || levels.levels[levels.currentLevel][y][co[0] + 1] == 3)) {
-                if (co[0] >= levels.size[0] - 1) {startOver(levels.currentLevel + 1); return;}
+                if (co[0] >= levels.size[0]) {startOver(levels.currentLevel + 1); return;}
                 this.vcoor[0] = 0;
                 this.coor[0] = Math.ceil(this.coor[0] / unit) * unit;
             }
@@ -198,13 +200,13 @@ function Button(x, y, dir, colour, mechanics) {
     this.dir = dir;
     this.colour = colour; // 0-blue doors 1-green spikes *** on level map: 3 = door, 4 = spikes
     this.mechanics = mechanics;
-    this.tarCur = 1; // mechanic curr animation point.
+    this.tarCur = 3; // mechanic curr animation point.
     this.target = 0; // mechanic animation target.
     this.pressed = 0;
     this.coor = [x * unit, y * unit];
     this.init = function () {
         this.frame = 0;
-        this.tarCur = 1;
+        this.tarCur = 3;
         this.target = 0;
         this.pressed = 0;
         this.draw();
@@ -233,12 +235,13 @@ function Button(x, y, dir, colour, mechanics) {
         }
         this.draw();
     }
-    this.draw = function () {
+    this.draw = function (draw = true) {
         this.target = this.pressed * 3;
-        clear(canvases.MCctx, this.coor);
+        if (draw) clear(canvases.MCctx, this.coor);
         canvases.MCctx.drawImage(buttonImg, (this.pressed + this.dir*3) * 100, (this.colour) * 100, 100, 100, this.coor[0], this.coor[1], unit, unit);
+        if (!draw) clear(canvases.MCctx, this.coor);
     }
-    this.drawMechanics = function () {
+    this.drawMechanics = function (draw = true) {
         if (this.target === this.tarCur) {
             if (!this.target) {
                 for (let i = 0; i < this.mechanics.length; i++) {
@@ -254,13 +257,15 @@ function Button(x, y, dir, colour, mechanics) {
         this.tarCur += this.target * 2 / 3 - 1;
         if (this.colour == 0) { // blue doors
             for (let i = 0; i < this.mechanics.length; i++) {
-                clear(canvases.MCctx, [this.mechanics[i][0] * unit, this.mechanics[i][1] * unit]);
+                if (draw) clear(canvases.MCctx, [this.mechanics[i][0] * unit, this.mechanics[i][1] * unit]);
                 canvases.MCctx.drawImage(doorImg, (this.tarCur) * 100, 0, 100, 100, this.mechanics[i][0] * unit, this.mechanics[i][1] * unit, unit, unit);
+                if (!draw) clear(canvases.MCctx, [this.mechanics[i][0] * unit, this.mechanics[i][1] * unit]);
             }
         } else { // green spikes
             for (let i = 0; i < this.mechanics.length; i++) {
-                clear(canvases.MCctx, [this.mechanics[i][0] * unit, this.mechanics[i][1] * unit]);
+                if (draw) clear(canvases.MCctx, [this.mechanics[i][0] * unit, this.mechanics[i][1] * unit]);
                 canvases.MCctx.drawImage(spikeImg, (this.tarCur) * 100, 0, 100, 100, this.mechanics[i][0] * unit, this.mechanics[i][1] * unit, unit, unit);
+                if (!draw) clear(canvases.MCctx, [this.mechanics[i][0] * unit, this.mechanics[i][1] * unit]);
             }
         }
     }
@@ -328,6 +333,7 @@ var levels = {
     init: function () {
         this.ground.src = "assets/BlockTileset2.png";
         this.ground.onload = function () {
+            avatar.init();
             levels.startLevel(0);
         }
     },
@@ -335,11 +341,7 @@ var levels = {
         this.levels.push(values);
         this.buttons.push(buttons);
     },
-    drawLevel: function (level, side) {
-        clear(canvases.BCctx);
-        clear(canvases.GCctx);
-        clear(canvases.FCctx);
-        clear(canvases.MCctx);
+    drawLevel: function (level) {
         for (let i = 1; i <= this.size[0]; i++) {
             for (let j = 1; j <= this.size[1]; j++) {
                 switch (this.levels[level][j][i]) {
@@ -362,9 +364,9 @@ var levels = {
                 }
             }
         }
-        if (levels.buttons[levels.currentLevel] != '') {
-			for (var i = 0; i < levels.buttons[levels.currentLevel].length; i++) {
-				levels.buttons[levels.currentLevel][i].init();
+        if (levels.buttons[level].length > 0) {
+			for (var i = 0; i < levels.buttons[level].length; i++) {
+				levels.buttons[level][i].init();
 			}
 		}
     },
@@ -373,6 +375,12 @@ var levels = {
         frame = 0;
         stepCounter = 0;
         paused = false;
+        if (levels.buttons[levels.currentLevel].length > 0) {
+			for (var i = 0; i < levels.buttons[levels.currentLevel].length; i++) {
+				levels.buttons[levels.currentLevel][i].draw(false);
+				levels.buttons[levels.currentLevel][i].drawMechanics(false);
+			}
+		}
         this.drawLevel(level);
         this.ghosts = [];
         nextGhost = new Ghost();
@@ -389,7 +397,7 @@ levels.addLevel(
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
         [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
-        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1],
         [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
         [1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
         [1, 2, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1],
